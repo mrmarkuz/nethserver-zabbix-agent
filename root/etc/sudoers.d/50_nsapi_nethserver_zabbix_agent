@@ -1,9 +1,0 @@
-#
-# nsapi_nethserver_zabbix_agent
-#
-Cmnd_Alias NSAPI_NETHSERVER_ZABBIX_AGENT = \
-    /usr/libexec/nethserver/api/nethserver-zabbix-agent/read
-
-#zabbix ALL= NOPASSWD: /usr/bin/nmap
-
-Defaults!NSAPI_NETHSERVER_ZABBIX_AGENT !requiretty
