@@ -1,0 +1,19 @@
+{
+  "id": "nethserver-zabbix-agent",
+  "name": "Zabbix",
+  "summary": "Nethserver integration of Zabbix monitoring",
+  "description": "Provides real-time monitoring",
+  "url": "",
+  "provides": ["nethserver-zabbix-agent"],
+  "release": {
+    "version": "0.0.1"
+  },
+  "author": {
+    "name": "Community Project"
+  },
+  "infoapi": {
+    "path": "nethserver-zabbix-agent/read"
+  },
+  "icon": "logo.png",
+  "external": true
+}
