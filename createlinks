@@ -17,21 +17,6 @@ event_actions ($event,
 
 templates2events("/etc/zabbix/zabbix_agentd.conf", $event);
 
-#example 1
-
-#launch several actions following one event
-# number < 10 -> action start before template expand
-# number < 90 -> action start after template expansion
-# number > 90 < 100 -> action starts after the service restart
-#event_actions($event, qw(
-#             nethserver-zabbix-conf 20
-#));
-#expand templates following one event
-#event_templates($event, qw(
-#                /etc/httpd/conf.d/virtualhosts.conf
-#                /etc/Other/Path
-#));
-#restart services following one event
 event_services($event,
                'zabbix-agent' => 'restart'
 );
