@@ -386,7 +386,7 @@ Include=/etc/zabbix/zabbix_agentd.d/*.conf
 #
 # Mandatory: no
 # Default:
-{(${'zabbix-agent'}{'PskID'} ||'') ne '' ? '' : '#'}TLSPSKIdentity=PSK {(${'zabbix-agent'}{'PskID'} ||'')}
+{(${'zabbix-agent'}{'PskID'} ||'') ne '' ? '' : '#'}TLSPSKIdentity={(${'zabbix-agent'}{'PskID'} ||'')}
 
 ### Option: TLSPSKFile
 #	Full pathname of a file containing the pre-shared key.
