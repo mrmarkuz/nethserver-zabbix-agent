@@ -11,7 +11,6 @@ Source: %{name}-%{version}.tar.gz
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 #Requires: zabbix-web-pgsql-scl
 Requires: zabbix-agent
-Conflicts: nethserver-zabbix
 BuildRequires: nethserver-devtools
 BuildArch: noarch
 
