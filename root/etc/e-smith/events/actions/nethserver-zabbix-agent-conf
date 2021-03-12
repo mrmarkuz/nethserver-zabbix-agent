@@ -1,7 +1,7 @@
-#!/usr/bin/perl -w
+#!/bin/bash
 
 #
-# Copyright (C) 2013 Nethesis S.r.l.
+# Copyright (C) 2021 Nethesis S.r.l.
 # http://www.nethesis.it - support@nethesis.it
 # 
 # This script is part of NethServer.
@@ -20,21 +20,8 @@
 # along with NethServer.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-package esmith;
-
-use strict;
-use Errno;
-use esmith::util;
-use NethServer::Password;
-
-
-## Test if the zabbix Mysql DB exists, if yes, then upgrade it
-#     if ( -d '/var/lib/mysql/zabbix') {
-#        system ('zcat /usr/share/doc/zabbix-server-mysql-*/create.sql.gz | /usr/bin/mysql zabbix');
-#     }
-##test if the mysql db is created, if not then the user and the mysql db are created
-#     if ( ! -d '/var/lib/mysql/zabbix') {
-
-#my $password = NethServer::Password::store('zabbix') || die('Could not generate zabbix password!');
-
-exit (0);
+if [[ ! -f "/etc/zabbix/psk.shared" ]];then 
+    /usr/bin/openssl rand -hex 32 > /etc/zabbix/psk.shared
+    /usr/bin/chown zabbix:zabbix /etc/zabbix/psk.shared
+    /usr/bin/chmod 400 /etc/zabbix/psk.shared
+fi
