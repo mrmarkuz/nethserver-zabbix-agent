@@ -145,8 +145,13 @@ ServerActive={${'zabbix-agent'}{'ServerZabbix'}||'127.0.0.1'}
 # Mandatory: no
 # Default:
 # Hostname=
-
-Hostname={$SystemName}.{$DomainName}
+{
+  if ( -f "/etc/e-smith/db/configuration/defaults/zabbix-server/status") {
+    $OUT .= "Hostname=Zabbix server"
+  } else {
+    $OUT .= "Hostname=$SystemName.$DomainName"
+  }
+}
 
 ### Option: HostnameItem
 #	Item used for generating Hostname if it is undefined. Ignored if Hostname is defined.
