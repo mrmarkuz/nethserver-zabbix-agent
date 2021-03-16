@@ -12,6 +12,7 @@ use esmith::Build::CreateLinks qw(:all);
 my $event = 'nethserver-zabbix-agent-update';
 event_actions ($event,
      'initialize-default-databases' => '00',
+     'nethserver-zabbix-agent_enablerepo' => '10',
      'nethserver-zabbix-agent-conf' => '10'
 );
 
