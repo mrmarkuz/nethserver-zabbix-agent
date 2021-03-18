@@ -17,7 +17,9 @@ event_actions ($event,
 );
 
 templates2events("/etc/zabbix/zabbix_agentd.conf", $event);
+templates2events("/etc/zabbix/zabbix_agent2.conf", $event);
 
 event_services($event,
-               'zabbix-agent' => 'restart'
+               'zabbix-agent' => 'restart',
+               'zabbix-agent2' => 'restart'
 );
