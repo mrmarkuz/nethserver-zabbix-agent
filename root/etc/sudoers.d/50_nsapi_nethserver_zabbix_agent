@@ -1,0 +1,7 @@
+#
+# nsapi_nethserver_zabbix_agent
+#
+
+zabbix ALL= NOPASSWD: /usr/bin/rpm -qa
+
+Defaults!NSAPI_NETHSERVER_ZABBIX !requiretty
