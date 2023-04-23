@@ -9,8 +9,7 @@
 # Mandatory: no
 # Default:
 # PidFile=/tmp/zabbix_agentd.pid
-
-PidFile=/var/run/zabbix/zabbix_agentd.pid
+PidFile=/run/zabbix/zabbix_agentd.pid
 
 ### Option: LogType
 #	Specifies where log messages are written to:
@@ -25,7 +24,7 @@ PidFile=/var/run/zabbix/zabbix_agentd.pid
 ### Option: LogFile
 #	Log file name for LogType 'file' parameter.
 #
-# Mandatory: no
+# Mandatory: yes, if LogType is set to file, otherwise no
 # Default:
 # LogFile=
 
@@ -39,7 +38,6 @@ LogFile=/var/log/zabbix/zabbix_agentd.log
 # Range: 0-1024
 # Default:
 # LogFileSize=1
-
 LogFileSize=0
 
 ### Option: DebugLevel
@@ -63,14 +61,33 @@ LogFileSize=0
 # Default:
 # SourceIP=
 
-### Option: EnableRemoteCommands
-#	Whether remote commands from Zabbix server are allowed.
-#	0 - not allowed
-#	1 - allowed
+### Option: AllowKey
+#	Allow execution of item keys matching pattern.
+#	Multiple keys matching rules may be defined in combination with DenyKey.
+#	Key pattern is wildcard expression, which support "*" character to match any number of any characters in certain position. It might be used in both key name and key arguments.
+#	Parameters are processed one by one according their appearance order.
+#	If no AllowKey or DenyKey rules defined, all keys are allowed.
+#
+# Mandatory: no
+
+### Option: DenyKey
+#	Deny execution of items keys matching pattern.
+#	Multiple keys matching rules may be defined in combination with AllowKey.
+#	Key pattern is wildcard expression, which support "*" character to match any number of any characters in certain position. It might be used in both key name and key arguments.
+#	Parameters are processed one by one according their appearance order.
+#	If no AllowKey or DenyKey rules defined, all keys are allowed.
+#       Unless another system.run[*] rule is specified DenyKey=system.run[*] is added by default.
 #
 # Mandatory: no
 # Default:
-# EnableRemoteCommands=0
+# DenyKey=system.run[*]
+
+### Option: EnableRemoteCommands - Deprecated, use AllowKey=system.run[*] or DenyKey=system.run[*] instead
+#	Internal alias for AllowKey/DenyKey parameters depending on value:
+#	0 - DenyKey=system.run[*]
+#	1 - AllowKey=system.run[*]
+#
+# Mandatory: no
 
 ### Option: LogRemoteCommands
 #	Enable logging of executed shell commands as warnings.
@@ -84,13 +101,14 @@ LogFileSize=0
 ##### Passive checks related
 
 ### Option: Server
-#	List of comma delimited IP addresses, optionally in CIDR notation, or hostnames of Zabbix servers.
+#	List of comma delimited IP addresses, optionally in CIDR notation, or DNS names of Zabbix servers and Zabbix proxies.
 #	Incoming connections will be accepted only from the hosts listed here.
-#	If IPv6 support is enabled then '127.0.0.1', '::127.0.0.1', '::ffff:127.0.0.1' are treated equally and '::/0' will allow any IPv4 or IPv6 address.
+#	If IPv6 support is enabled then '127.0.0.1', '::127.0.0.1', '::ffff:127.0.0.1' are treated equally
+#	and '::/0' will allow any IPv4 or IPv6 address.
 #	'0.0.0.0/0' can be used to allow any IPv4 address.
-#	Example: Server=127.0.0.1,192.168.1.0/24,::1,2001:db8::/32,zabbix.domain
+#	Example: Server=127.0.0.1,192.168.1.0/24,::1,2001:db8::/32,zabbix.example.com
 #
-# Mandatory: no
+# Mandatory: yes, if StartAgents is not explicitly set to 0
 # Default:
 # Server=
 
@@ -102,6 +120,7 @@ Server={${'zabbix-agent'}{'ServerZabbix'}||'127.0.0.1'}
 # Mandatory: no
 # Range: 1024-32767
 # Default:
+# ListenPort=10050
 ListenPort={${'zabbix-agent'}{'TCPPort'}||'10050'}
 
 ### Option: ListenIP
@@ -124,12 +143,25 @@ ListenPort={${'zabbix-agent'}{'TCPPort'}||'10050'}
 ##### Active checks related
 
 ### Option: ServerActive
-#	List of comma delimited IP:port (or hostname:port) pairs of Zabbix servers for active checks.
+#	Zabbix server/proxy address or cluster configuration to get active checks from.
+#	Server/proxy address is IP address or DNS name and optional port separated by colon.
+#	Cluster configuration is one or more server addresses separated by semicolon.
+#	Multiple Zabbix servers/clusters and Zabbix proxies can be specified, separated by comma.
+#	More than one Zabbix proxy should not be specified from each Zabbix server/cluster.
+#	If Zabbix proxy is specified then Zabbix server/cluster for that proxy should not be specified.
+#	Multiple comma-delimited addresses can be provided to use several independent Zabbix servers in parallel. Spaces are allowed.
 #	If port is not specified, default port is used.
 #	IPv6 addresses must be enclosed in square brackets if port for that host is specified.
 #	If port is not specified, square brackets for IPv6 addresses are optional.
 #	If this parameter is not specified, active checks are disabled.
-#	Example: ServerActive=127.0.0.1:20051,zabbix.domain,[::1]:30051,::1,[12fc::1]
+#	Example for Zabbix proxy:
+#		ServerActive=127.0.0.1:10051
+#	Example for multiple servers:
+#		ServerActive=127.0.0.1:20051,zabbix.domain,[::1]:30051,::1,[12fc::1]
+#	Example for high availability:
+#		ServerActive=zabbix.cluster.node1;zabbix.cluster.node2:20051;zabbix.cluster.node3
+#	Example for high availability with two clusters and one server:
+#		ServerActive=zabbix.cluster.node1;zabbix.cluster.node2:20051,zabbix.cluster2.node1;zabbix.cluster2.node2,zabbix.domain
 #
 # Mandatory: no
 # Default:
@@ -138,13 +170,15 @@ ListenPort={${'zabbix-agent'}{'TCPPort'}||'10050'}
 ServerActive={${'zabbix-agent'}{'ServerZabbix'}||'127.0.0.1'}
 
 ### Option: Hostname
-#	Unique, case sensitive hostname.
-#	Required for active checks and must match hostname as configured on the server.
+#	List of comma delimited unique, case sensitive hostnames.
+#	Required for active checks and must match hostnames as configured on the server.
 #	Value is acquired from HostnameItem if undefined.
 #
 # Mandatory: no
 # Default:
 # Hostname=
+
+Hostname=Zabbix server
 {
   if ( -f "/etc/e-smith/db/configuration/defaults/zabbix-server/status" || -f "/etc/e-smith/db/configuration/defaults/zabbix-docker/status") {
     $OUT .= "Hostname=Zabbix server"
@@ -182,6 +216,28 @@ ServerActive={${'zabbix-agent'}{'ServerZabbix'}||'127.0.0.1'}
 # Mandatory: no
 # Default:
 # HostMetadataItem=
+
+### Option: HostInterface
+#	Optional parameter that defines host interface.
+#	Host interface is used at host auto-registration process.
+#	An agent will issue an error and not start if the value is over limit of 255 characters.
+#	If not defined, value will be acquired from HostInterfaceItem.
+#
+# Mandatory: no
+# Range: 0-255 characters
+# Default:
+# HostInterface=
+
+### Option: HostInterfaceItem
+#	Optional parameter that defines an item used for getting host interface.
+#	Host interface is used at host auto-registration process.
+#	During an auto-registration request an agent will log a warning message if
+#	the value returned by specified item is over limit of 255 characters.
+#	This option is only used when HostInterface is not defined.
+#
+# Mandatory: no
+# Default:
+# HostInterfaceItem=
 
 ### Option: RefreshActiveChecks
 #	How often list of active checks is refreshed, in seconds.
@@ -259,21 +315,21 @@ ServerActive={${'zabbix-agent'}{'ServerZabbix'}||'127.0.0.1'}
 #
 # Mandatory: no
 # Default:
-User=zabbix
+# User=zabbix
 
 ### Option: Include
 #	You may include individual files or all files in a directory in the configuration file.
-#	Installing Zabbix will create include directory in /usr/local/etc, unless modified during the compile time.
+#	Installing Zabbix will create include directory in /etc, unless modified during the compile time.
 #
 # Mandatory: no
 # Default:
 # Include=
 
-Include=/etc/zabbix/zabbix_agentd.d/*.conf
+# Include=/etc/zabbix_agentd.userparams.conf
+# Include=/etc/zabbix_agentd.conf.d/
+# Include=/etc/zabbix_agentd.conf.d/*.conf
 
-# Include=/usr/local/etc/zabbix_agentd.userparams.conf
-# Include=/usr/local/etc/zabbix_agentd.conf.d/
-# Include=/usr/local/etc/zabbix_agentd.conf.d/*.conf
+Include=/etc/zabbix/zabbix-agentd.d/
 
 ####### USER-DEFINED MONITORED PARAMETERS #######
 
@@ -299,20 +355,35 @@ Include=/etc/zabbix/zabbix_agentd.d/*.conf
 # Default:
 # UserParameter=
 
+### Option: UserParameterDir
+#	Directory to execute UserParameter commands from. Only one entry is allowed.
+#	When executing UserParameter commands the agent will change the working directory to the one
+#	specified in the UserParameterDir option.
+#	This way UserParameter commands can be specified using the relative ./ prefix.
+#
+# Mandatory: no
+# Default:
+# UserParameterDir=
+
 ####### LOADABLE MODULES #######
 
 ### Option: LoadModulePath
 #	Full path to location of agent modules.
 #	Default depends on compilation options.
+#	To see the default path run command "zabbix_agentd --help".
 #
 # Mandatory: no
 # Default:
-# LoadModulePath=${"libdir"}/modules
+# LoadModulePath=${libdir}/modules
 
 ### Option: LoadModule
 #	Module to load at agent startup. Modules are used to extend functionality of the agent.
-#	Format: LoadModule=<module.so>
-#	The modules must be located in directory specified by LoadModulePath.
+#	Formats:
+#		LoadModule=<module.so>
+#		LoadModule=<path/module.so>
+#		LoadModule=</abs_path/module.so>
+#	Either the module must be located in directory specified by LoadModulePath or the path must precede the module name.
+#	If the preceding path is absolute (starts with '/') then LoadModulePath is ignored.
 #	It is allowed to include multiple LoadModule parameters.
 #
 # Mandatory: no
@@ -330,6 +401,7 @@ Include=/etc/zabbix/zabbix_agentd.d/*.conf
 #
 # Mandatory: yes, if TLS certificate or PSK parameters are defined (even for 'unencrypted' connection)
 # Default:
+# TLSConnect=unencrypted
 {(${'zabbix-agent'}{'PskID'} ||'') ne '' ? '' : '#'}TLSConnect=psk
 
 ### Option: TLSAccept
@@ -341,6 +413,7 @@ Include=/etc/zabbix/zabbix_agentd.d/*.conf
 #
 # Mandatory: yes, if TLS certificate or PSK parameters are defined (even for 'unencrypted' connection)
 # Default:
+# TLSAccept=unencrypted
 {(${'zabbix-agent'}{'PskID'} ||'') ne '' ? '' : '#'}TLSAccept=psk
 
 ### Option: TLSCAFile
@@ -359,14 +432,14 @@ Include=/etc/zabbix/zabbix_agentd.d/*.conf
 # TLSCRLFile=
 
 ### Option: TLSServerCertIssuer
-#      Allowed server certificate issuer.
+#		Allowed server certificate issuer.
 #
 # Mandatory: no
 # Default:
 # TLSServerCertIssuer=
 
 ### Option: TLSServerCertSubject
-#      Allowed server certificate subject.
+#		Allowed server certificate subject.
 #
 # Mandatory: no
 # Default:
@@ -391,6 +464,7 @@ Include=/etc/zabbix/zabbix_agentd.d/*.conf
 #
 # Mandatory: no
 # Default:
+# TLSPSKIdentity=
 {(${'zabbix-agent'}{'PskID'} ||'') ne '' ? '' : '#'}TLSPSKIdentity={(${'zabbix-agent'}{'PskID'} ||'')}
 
 ### Option: TLSPSKFile
@@ -398,4 +472,83 @@ Include=/etc/zabbix/zabbix_agentd.d/*.conf
 #
 # Mandatory: no
 # Default:
+# TLSPSKFile=
 {(${'zabbix-agent'}{'PskID'} ||'') ne '' ? '' : '#'}TLSPSKFile=/etc/zabbix/psk.shared
+
+####### For advanced users - TLS ciphersuite selection criteria #######
+
+### Option: TLSCipherCert13
+#	Cipher string for OpenSSL 1.1.1 or newer in TLS 1.3.
+#	Override the default ciphersuite selection criteria for certificate-based encryption.
+#
+# Mandatory: no
+# Default:
+# TLSCipherCert13=
+
+### Option: TLSCipherCert
+#	GnuTLS priority string or OpenSSL (TLS 1.2) cipher string.
+#	Override the default ciphersuite selection criteria for certificate-based encryption.
+#	Example for GnuTLS:
+#		NONE:+VERS-TLS1.2:+ECDHE-RSA:+RSA:+AES-128-GCM:+AES-128-CBC:+AEAD:+SHA256:+SHA1:+CURVE-ALL:+COMP-NULL:+SIGN-ALL:+CTYPE-X.509
+#	Example for OpenSSL:
+#		EECDH+aRSA+AES128:RSA+aRSA+AES128
+#
+# Mandatory: no
+# Default:
+# TLSCipherCert=
+
+### Option: TLSCipherPSK13
+#	Cipher string for OpenSSL 1.1.1 or newer in TLS 1.3.
+#	Override the default ciphersuite selection criteria for PSK-based encryption.
+#	Example:
+#		TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256
+#
+# Mandatory: no
+# Default:
+# TLSCipherPSK13=
+
+### Option: TLSCipherPSK
+#	GnuTLS priority string or OpenSSL (TLS 1.2) cipher string.
+#	Override the default ciphersuite selection criteria for PSK-based encryption.
+#	Example for GnuTLS:
+#		NONE:+VERS-TLS1.2:+ECDHE-PSK:+PSK:+AES-128-GCM:+AES-128-CBC:+AEAD:+SHA256:+SHA1:+CURVE-ALL:+COMP-NULL:+SIGN-ALL
+#	Example for OpenSSL:
+#		kECDHEPSK+AES128:kPSK+AES128
+#
+# Mandatory: no
+# Default:
+# TLSCipherPSK=
+{(${'zabbix-agent'}{'PskID'} ||'') ne '' ? '' : '#'}TLSCipherPSK=kECDHEPSK+AES128:kPSK+AES128
+
+### Option: TLSCipherAll13
+#	Cipher string for OpenSSL 1.1.1 or newer in TLS 1.3.
+#	Override the default ciphersuite selection criteria for certificate- and PSK-based encryption.
+#	Example:
+#		TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256
+#
+# Mandatory: no
+# Default:
+# TLSCipherAll13=
+
+### Option: TLSCipherAll
+#	GnuTLS priority string or OpenSSL (TLS 1.2) cipher string.
+#	Override the default ciphersuite selection criteria for certificate- and PSK-based encryption.
+#	Example for GnuTLS:
+#		NONE:+VERS-TLS1.2:+ECDHE-RSA:+RSA:+ECDHE-PSK:+PSK:+AES-128-GCM:+AES-128-CBC:+AEAD:+SHA256:+SHA1:+CURVE-ALL:+COMP-NULL:+SIGN-ALL:+CTYPE-X.509
+#	Example for OpenSSL:
+#		EECDH+aRSA+AES128:RSA+aRSA+AES128:kECDHEPSK+AES128:kPSK+AES128
+#
+# Mandatory: no
+# Default:
+# TLSCipherAll=
+
+####### For advanced users - TCP-related fine-tuning parameters #######
+
+## Option: ListenBacklog
+#       The maximum number of pending connections in the queue. This parameter is passed to
+#       listen() function as argument 'backlog' (see "man listen").
+#
+# Mandatory: no
+# Range: 0 - INT_MAX (depends on system, too large values may be silently truncated to implementation-specified maximum)
+# Default: SOMAXCONN (hard-coded constant, depends on system)
+# ListenBacklog=

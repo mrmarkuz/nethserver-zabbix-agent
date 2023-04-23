@@ -1,7 +1,0 @@
-{
-# enable the  repository of zabbix
-if ( ! -f '/etc/e-smith/db/configuration/defaults/zabbix-server/status') {
-    push @repos, 'zabbix';
-}
-    '';
-}
