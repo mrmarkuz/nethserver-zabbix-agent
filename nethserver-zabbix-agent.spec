@@ -2,7 +2,7 @@ Summary: nethserver-zabbix-agent integrates the monitoring agent
 %define name nethserver-zabbix-agent
 Name: %{name}
 %define version 0.0.1
-%define release 2
+%define release 3
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -10,8 +10,8 @@ Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 #Requires: zabbix-web-pgsql-scl
-Requires: zabbix-agent
-Requires: zabbix-agent2
+Requires: zabbix-agent < 6.0
+Requires: zabbix-agent2 < 6.0
 BuildRequires: nethserver-devtools
 BuildArch: noarch
 
